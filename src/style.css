@@ -2424,3 +2424,455 @@ body {
 }
 
 
+
+/* ==========================================
+   CLUB DETAIL / OVERVIEW PAGE
+   ========================================== */
+
+/* Cinematic hero banner at the top of the club detail page */
+.club-detail-hero {
+  position: relative;
+  padding: 3rem 2rem 2.5rem;
+  border-radius: 20px;
+  margin-bottom: 2rem;
+  overflow: hidden;
+}
+
+.club-detail-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+.club-detail-hero-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.club-detail-icon {
+  font-size: 4rem;
+  line-height: 1;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.15);
+  border-radius: 50%;
+  width: 90px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255,255,255,0.3);
+}
+
+.club-detail-hero-content h1 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0.3rem 0 0.5rem;
+}
+
+.club-detail-hero-content p {
+  color: rgba(255,255,255,0.85);
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* Two-column layout for main body */
+.club-detail-body {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.club-detail-main,
+.club-detail-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.club-detail-section {
+  padding: 2rem;
+}
+
+.section-heading {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.section-heading i {
+  opacity: 0.7;
+}
+
+.club-detail-desc-text {
+  color: var(--text-secondary);
+  line-height: 1.9;
+  font-size: 0.97rem;
+}
+
+/* Club Stats Pills */
+.club-stats-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+.club-stat-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 50px;
+  padding: 0.5rem 1rem;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+
+.club-stat-pill i {
+  color: var(--accent-teal);
+}
+
+.club-stat-pill strong {
+  color: var(--text-primary);
+}
+
+/* YouTube wrapper */
+.club-yt-wrapper {
+  margin-top: 1rem;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+}
+
+/* What You'll Gain grid */
+.gain-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.gain-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.2rem 0.5rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.gain-item:hover {
+  background: rgba(0, 242, 254, 0.08);
+  border-color: var(--accent-teal);
+  color: var(--text-primary);
+  transform: translateY(-3px);
+}
+
+.gain-item i {
+  font-size: 1.5rem;
+  color: var(--accent-teal);
+}
+
+/* Coordinator Card */
+.coordinator-card {
+  padding: 2rem;
+  text-align: center;
+}
+
+.coordinator-avatar-wrap {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
+.coordinator-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 3px solid var(--accent-teal);
+  box-shadow: 0 0 20px rgba(0, 242, 254, 0.3);
+  object-fit: cover;
+}
+
+.coordinator-status-dot {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  width: 14px;
+  height: 14px;
+  background: #22c55e;
+  border-radius: 50%;
+  border: 2px solid var(--bg-secondary);
+}
+
+.coordinator-name {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.3rem;
+}
+
+.coordinator-title {
+  font-size: 0.85rem;
+  color: var(--accent-teal);
+  letter-spacing: 0.5px;
+  margin: 0 0 0.5rem;
+}
+
+.coordinator-dept {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin: 0 0 1.2rem;
+}
+
+.coordinator-dept i {
+  margin-right: 0.3rem;
+}
+
+.coordinator-contact {
+  margin-top: 1rem;
+}
+
+.coordinator-email-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(0, 242, 254, 0.1);
+  border: 1px solid var(--accent-teal);
+  color: var(--accent-teal);
+  padding: 0.6rem 1.5rem;
+  border-radius: 50px;
+  font-size: 0.88rem;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.coordinator-email-btn:hover {
+  background: var(--accent-teal);
+  color: #000;
+}
+
+/* Big Register CTA Button */
+.register-cta-btn {
+  width: 100%;
+  padding: 1.1rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border-radius: 14px;
+  margin-top: 1rem;
+  box-shadow: 0 6px 20px rgba(255, 65, 108, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.register-cta-btn:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 28px rgba(255, 65, 108, 0.55);
+}
+
+/* Responsive for club detail */
+@media (max-width: 992px) {
+  .club-detail-body {
+    grid-template-columns: 1fr;
+  }
+  .club-detail-sidebar {
+    order: -1;
+  }
+  .gain-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .club-detail-hero-content {
+    flex-direction: column;
+    text-align: center;
+  }
+  .club-detail-hero-content h1 {
+    font-size: 1.6rem;
+  }
+}
+
+/* YouTube Hover Teaser Styles */
+.club-yt-wrapper:hover .video-hover-overlay {
+  background: rgba(0, 0, 0, 0) !important;
+}
+.club-yt-wrapper:hover .play-overlay-btn {
+  opacity: 0;
+  transform: scale(1.2);
+}
+.play-overlay-btn {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==========================================
+   ATTENDANCE TABLE
+   ========================================== */
+
+.attendance-table td {
+  vertical-align: middle;
+}
+
+.attendance-student-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.attendance-student-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.attendance-student-email {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+/* Toggle Buttons */
+.attendance-status-group {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.btn-attendance {
+  padding: 6px 18px;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-attendance.present {
+  background: rgba(0, 230, 118, 0.15);
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+}
+
+.btn-attendance.present.active {
+  background: var(--accent-green);
+  color: #000;
+  box-shadow: 0 0 12px rgba(0, 230, 118, 0.4);
+}
+
+.btn-attendance.absent {
+  background: rgba(255, 65, 108, 0.1);
+  border-color: #FF416C;
+  color: #FF416C;
+}
+
+.btn-attendance.absent.active {
+  background: #FF416C;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(255, 65, 108, 0.4);
+}
+
+.btn-attendance:hover:not(.active) {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+/* 5-day history grid */
+.history-grid {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  align-items: center;
+}
+
+.history-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.history-day-label {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.history-day-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.history-day-dot.present {
+  background: rgba(0, 230, 118, 0.2);
+  color: var(--accent-green);
+  border: 1.5px solid var(--accent-green);
+}
+
+.history-day-dot.absent {
+  background: rgba(255, 65, 108, 0.15);
+  color: #FF416C;
+  border: 1.5px solid #FF416C;
+}
+
+.history-day-dot.none {
+  background: rgba(255,255,255,0.05);
+  color: var(--text-secondary);
+  border: 1.5px solid rgba(255,255,255,0.1);
+}
+
+/* Absent days badge */
+.absent-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  font-weight: 800;
+  margin: auto;
+}
+
+.absent-badge.low {
+  background: rgba(0, 230, 118, 0.15);
+  color: var(--accent-green);
+}
+
+.absent-badge.mid {
+  background: rgba(255, 170, 50, 0.15);
+  color: var(--accent-orange);
+}
+
+.absent-badge.high {
+  background: rgba(255, 65, 108, 0.15);
+  color: #FF416C;
+}

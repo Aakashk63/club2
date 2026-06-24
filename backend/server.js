@@ -2,8 +2,14 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { Club } from './models/Club.js';
 import { Booking } from './models/Booking.js';
+import { Report } from './models/Report.js';
+import Attendance from './models/Attendance.js';
 
 dotenv.config();
 
@@ -12,6 +18,30 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Ensure uploads folder exists
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+app.use('/uploads', express.static(uploadsDir));
+
+// Multer Config
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadsDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    const name = path.basename(file.originalname, ext);
+    cb(null, `${name}-${uniqueSuffix}${ext}`);
+  }
+});
+const upload = multer({ storage: storage });
 
 mongoose.connect(process.env.MONGO_URI)
 .then(() => console.log('Connected to MongoDB'))
@@ -39,7 +69,7 @@ app.get('/api/clubs', async (req, res) => {
   }
 });
 
-// Update single club slot (Not strictly necessary if booking handles it, but good for admin)
+// Update single club slot
 app.put('/api/clubs/:id/slots', async (req, res) => {
   try {
     const { slotsRemaining } = req.body;
@@ -114,6 +144,83 @@ app.delete('/api/bookings/:id', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+// Get all reports
+app.get('/api/reports', async (req, res) => {
+  try {
+    const reports = await Report.find().sort({ createdAt: -1 });
+    res.json(reports);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Submit a new report
+app.post('/api/reports', upload.single('report'), async (req, res) => {
+  try {
+    const { clubId, clubName, submittedBy } = req.body;
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    const report = new Report({
+      clubId,
+      clubName,
+      submittedBy,
+      fileName: req.file.originalname,
+      filePath: `/uploads/${req.file.filename}`,
+      fileType: req.file.mimetype
+    });
+    await report.save();
+    res.status(201).json(report);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+// Get attendance records for a club
+app.get('/api/attendance/:clubId', async (req, res) => {
+  try {
+    const { clubId } = req.params;
+    const records = await Attendance.find({ clubId }).sort({ date: -1 });
+    res.json(records);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Upsert (Record/Update) Attendance
+app.post('/api/attendance', async (req, res) => {
+  try {
+    const { clubId, studentEmail, studentName, date, status } = req.body;
+    
+    // Find and update if exists, otherwise create
+    const record = await Attendance.findOneAndUpdate(
+      { clubId, studentEmail, date },
+      { studentName, status },
+      { new: true, upsert: true }
+    );
+    res.json(record);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.log(`Port ${PORT} in use, retrying in 1s...`);
+    setTimeout(() => {
+      server.close();
+      server.listen(PORT);
+    }, 1000);
+  } else {
+    throw err;
+  }
+});
+
+// Graceful shutdown so node --watch can release the port before restarting
+process.on('SIGTERM', () => { server.close(() => process.exit(0)); });
+process.on('SIGINT',  () => { server.close(() => process.exit(0)); });

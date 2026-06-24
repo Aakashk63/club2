@@ -32,6 +32,7 @@ let simulatedLatency = true;
 const views = {
   overview: document.getElementById('overview-view'),
   booking: document.getElementById('booking-view'),
+  register: document.getElementById('register-view'),
   confirmation: document.getElementById('confirmation-view'),
   login: document.getElementById('login-view'),
   admin: document.getElementById('admin-view')
@@ -138,6 +139,15 @@ async function initDatabase() {
         data = await fetchRes.json();
       }
     }
+    // Merge youtubeId from CLUBS_DATA so clubs have unique videos if the database doesn't have them
+    data = data.map(dbClub => {
+      const localClub = CLUBS_DATA.find(c => c.id === dbClub.id);
+      if (localClub && localClub.youtubeId) {
+        return { ...dbClub, youtubeId: localClub.youtubeId };
+      }
+      return dbClub;
+    });
+    
     clubsState = data;
     updateAggregateCounters();
     renderOverviewGrid();
@@ -163,12 +173,17 @@ function updateAuthUI() {
     authLoggedOut.style.display = 'none';
     authLoggedIn.style.display = 'block';
 
-    // Admin avatar — always show shield icon
-    navUserAvatar.textContent = '🛡';
-    navUserName.textContent = 'Admin';
-
-    dropdownFullName.textContent = currentUser.name;
-    dropdownStudentId.textContent = 'System Administrator';
+    if (currentUser.role === 'admin') {
+      navUserAvatar.textContent = '🛡';
+      navUserName.textContent = 'Admin';
+      dropdownFullName.textContent = currentUser.name;
+      dropdownStudentId.textContent = 'System Administrator';
+    } else {
+      navUserAvatar.textContent = '👤';
+      navUserName.textContent = 'Staff';
+      dropdownFullName.textContent = currentUser.name;
+      dropdownStudentId.textContent = 'Club Coordinator';
+    }
     dropdownEmail.textContent = currentUser.email;
   } else {
     authLoggedOut.style.display = 'flex';
@@ -236,6 +251,16 @@ function switchView(viewName) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, 100);
 
+  // Stop card videos when leaving overview
+  if (viewName !== 'overview') {
+    const cardIframes = document.querySelectorAll('.card-yt-iframe');
+    cardIframes.forEach(iframe => {
+      if (iframe.contentWindow) {
+        iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+      }
+    });
+  }
+
   // Manage navbar actions visibility (only show search/filter on Overview)
   if (viewName === 'overview') {
     navbarActions.style.display = 'flex';
@@ -246,6 +271,14 @@ function switchView(viewName) {
   // If opening admin view, render the dashboard
   if (viewName === 'admin') {
     renderAdminDashboard();
+  }
+  
+  // Stop video when leaving club detail
+  if (viewName !== 'booking') {
+    const heroVideo = document.getElementById('club-detail-hero-video');
+    if (heroVideo) {
+      heroVideo.pause();
+    }
   }
 }
 
@@ -311,13 +344,28 @@ function syncCategoryControls(categoryValue) {
 // 5. RENDERING DYNAMIC CARDS
 // ==========================================
 function renderOverviewGrid() {
-  const filteredClubs = filterClubs();
+  const clubsGrid = document.getElementById('clubs-grid');
   clubsGrid.innerHTML = '';
+  
+  // Also attach the scroll event listener to the Register button here since it only needs to be bound once.
+  // We'll safely check if it hasn't been bound yet using a custom property.
+  const registerBtn = document.getElementById('scroll-to-register-btn');
+  if (registerBtn && !registerBtn.hasAttribute('data-bound')) {
+    registerBtn.setAttribute('data-bound', 'true');
+    registerBtn.addEventListener('click', () => {
+      const formContainer = document.querySelector('.registration-form-container');
+      if (formContainer) {
+        formContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  }
 
+  const filteredClubs = filterClubs();
+  
   filteredClubs.forEach(club => {
     const isFull = club.slotsRemaining <= 0;
     const progressPercent = ((MAX_SLOTS - club.slotsRemaining) / MAX_SLOTS) * 100;
-
+    
     // Determine progress bar and slot color class
     let progressClass = '';
     if (isFull) progressClass = 'full-slots';
@@ -327,47 +375,100 @@ function renderOverviewGrid() {
     card.className = `club-card ${isFull ? 'full-club' : ''}`;
     card.id = `card-${club.id}`;
     card.style.cursor = 'pointer';
+    card.style.position = 'relative';
+    card.style.overflow = 'hidden';
 
     card.innerHTML = `
-      <div class="club-card-banner" style="background: ${club.accentColor}"></div>
-      <div class="club-card-avatar" style="background: ${club.accentColor}">${club.icon}</div>
-      <div class="club-card-body">
-        <span class="club-category-tag">${club.category}</span>
-        <h3>${club.name}</h3>
-        <p>${club.tagline}</p>
-        
-        <div class="club-card-slot-box">
-          <div class="slot-progress-meta">
-            <span class="slot-progress-title">Slot Status</span>
-            <span class="slot-progress-count">
-              <span id="slots-val-${club.id}">${club.slotsRemaining}</span>/${MAX_SLOTS} remaining
-            </span>
-          </div>
-          <div class="slot-progress-bar-container">
-            <div class="slot-progress-bar ${progressClass}" style="width: ${progressPercent}%"></div>
+      <div class="club-card-yt-container" style="position: relative; width: 100%; height: 150px; overflow: hidden; z-index: 1;">
+        <iframe
+          class="card-yt-iframe"
+          src="https://www.youtube.com/embed/${club.youtubeId || 'N6IdjbbRWiU'}?enablejsapi=1&rel=0&modestbranding=1&mute=1&autoplay=0&controls=0"
+          title="Club Video"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;"
+        ></iframe>
+        <div class="video-hover-overlay" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 2; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); transition: background 0.3s ease, opacity 0.3s ease;">
+          <div class="play-overlay-btn" style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.2); border: 2px solid #fff; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); transition: transform 0.3s ease, opacity 0.3s ease;">
+            <i class="fa-solid fa-play" style="color: #fff; font-size: 14px; margin-left: 2px;"></i>
           </div>
         </div>
+      </div>
+      <div style="position: relative; z-index: 2;">
+        <div class="club-card-avatar" style="background: ${club.accentColor}; top: -30px; overflow: hidden; padding: 2px;">
+          <img src="${club.logoUrl || ''}" alt="${club.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; background: #fff;">
+        </div>
+        <div class="club-card-body" style="padding-top: 30px;">
+          <span class="club-category-tag">${club.category}</span>
+          <h3>${club.name}</h3>
+          <p>${club.tagline}</p>
+          
+          <div class="club-card-slot-box">
+            <div class="slot-progress-meta">
+              <span class="slot-progress-title">Slot Status</span>
+              <span class="slot-progress-count">
+                <span id="slots-val-${club.id}">${club.slotsRemaining}</span>/${MAX_SLOTS} remaining
+              </span>
+            </div>
+            <div class="slot-progress-bar-container">
+              <div class="slot-progress-bar ${progressClass}" style="width: ${progressPercent}%"></div>
+            </div>
+          </div>
 
-        <div class="club-card-footer">
-          <div class="club-card-action">
-            ${isFull
-        ? `<button class="btn btn-outline" disabled><i class="fa-solid fa-ban"></i> Club Full</button>`
-        : `<button class="btn btn-primary book-btn-trigger" data-id="${club.id}">Book Slot <i class="fa-solid fa-arrow-right-long"></i></button>`
-      }
+          <div class="club-card-footer">
+            <div class="club-card-action">
+              ${isFull
+          ? `<button class="btn btn-outline" disabled><i class="fa-solid fa-ban"></i> Club Full</button>`
+          : `<button class="btn btn-primary book-btn-trigger" data-id="${club.id}">Book Slot <i class="fa-solid fa-arrow-right-long"></i></button>`
+        }
+            </div>
           </div>
         </div>
       </div>
     `;
 
+    // Hover logic for the YouTube video
+    card.addEventListener('mouseenter', () => {
+      const overlay = card.querySelector('.video-hover-overlay');
+      const iframe = card.querySelector('.card-yt-iframe');
+      if (overlay) {
+        overlay.style.background = 'rgba(0,0,0,0)';
+        const playBtn = overlay.querySelector('.play-overlay-btn');
+        if (playBtn) playBtn.style.opacity = '0';
+      }
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+      }
+    });
+
+    card.addEventListener('mouseleave', () => {
+      const overlay = card.querySelector('.video-hover-overlay');
+      const iframe = card.querySelector('.card-yt-iframe');
+      if (overlay) {
+        overlay.style.background = 'rgba(0,0,0,0.5)';
+        const playBtn = overlay.querySelector('.play-overlay-btn');
+        if (playBtn) playBtn.style.opacity = '1';
+      }
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+      }
+    });
+
+    // Check if we need to show booking button
+
     clubsGrid.appendChild(card);
-    card.addEventListener('click', () => {
-      if (!isFull) navigateToBooking(club.id);
+    card.addEventListener('click', (e) => {
+      // Don't trigger if they clicked the book button directly (handled below)
+      if (!e.target.closest('.book-btn-trigger') && !isFull) {
+        navigateToBooking(club.id);
+      }
     });
   });
 
   // Attach Event Listeners to Book Now buttons
   document.querySelectorAll('.book-btn-trigger').forEach(btn => {
     btn.addEventListener('click', (e) => {
+      e.stopPropagation();
       const clubId = btn.getAttribute('data-id');
       navigateToBooking(clubId);
     });
@@ -379,15 +480,65 @@ function renderOverviewGrid() {
 // ==========================================
 function navigateToBooking(clubId) {
   selectedClubId = clubId;
-  updateBookingPageView(clubId);
+  renderClubDetailPage(clubId);
   switchView('booking');
+}
+
+function navigateToRegisterForm(clubId) {
+  selectedClubId = clubId;
+  updateBookingPageView(clubId);
+  switchView('register');
+}
+
+function renderClubDetailPage(clubId) {
+  const club = clubsState.find(c => c.id === clubId);
+  if (!club) return;
+
+  // Hero banner
+  const hero = document.getElementById('club-detail-hero');
+  hero.style.background = club.accentColor;
+
+  // Fill in detail fields
+  document.getElementById('detail-club-icon').innerHTML = `<img src="${club.logoUrl || ''}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />`;
+  document.getElementById('detail-club-category').textContent = club.category;
+  document.getElementById('detail-club-name').textContent = club.name;
+  document.getElementById('detail-club-tagline').textContent = club.tagline;
+  document.getElementById('detail-club-description').textContent = club.description;
+  document.getElementById('detail-club-slots').textContent = club.slotsRemaining;
+  document.getElementById('booking-nav-context').textContent = `Home / ${club.name}`;
+
+  // Slot progress
+  const filled = MAX_SLOTS - club.slotsRemaining;
+  const pct = (filled / MAX_SLOTS) * 100;
+  document.getElementById('booking-club-progress').style.width = `${pct}%`;
+  document.getElementById('detail-slots-text').textContent = `${filled} / ${MAX_SLOTS} filled`;
+
+  // Coordinator
+  const coord = club.coordinator || { name: 'Faculty Coordinator', title: 'Club Coordinator', dept: 'Department' };
+  const coordName = encodeURIComponent(coord.name);
+  document.getElementById('detail-coordinator-img').src = `https://ui-avatars.com/api/?name=${coordName}&background=random&rounded=true&size=128`;
+  document.getElementById('detail-coordinator-name').textContent = coord.name;
+  document.getElementById('detail-coordinator-title').textContent = coord.title;
+  document.getElementById('detail-coordinator-dept').innerHTML = `<i class="fa-solid fa-building-columns"></i> ${coord.dept}`;
+  const emailSlug = coord.name.toLowerCase().replace(/\s+/g, '.').replace(/[^a-z.]/g, '');
+  const emailLink = document.getElementById('detail-coordinator-email');
+  emailLink.href = `mailto:${emailSlug}@snsct.org`;
+
+  // Register Now button
+  const goRegBtn = document.getElementById('go-to-register-btn');
+  goRegBtn.onclick = () => navigateToRegisterForm(clubId);
+  const isFull = club.slotsRemaining <= 0;
+  goRegBtn.disabled = isFull;
+  goRegBtn.innerHTML = isFull
+    ? `<i class="fa-solid fa-ban"></i> Registration Closed`
+    : `<i class="fa-solid fa-pen-to-square"></i> Register Now`;
 }
 
 function updateBookingPageView(clubId) {
   const club = clubsState.find(c => c.id === clubId);
   if (!club) return;
 
-  bookingClubIcon.textContent = club.icon;
+  bookingClubIcon.innerHTML = `<img src="${club.logoUrl || ''}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />`;
   bookingClubIcon.style.background = club.accentColor;
   bookingClubCategory.textContent = club.category;
   bookingClubName.textContent = club.name;
@@ -695,8 +846,12 @@ document.getElementById('booking-back-btn').addEventListener('click', () => {
   switchView('overview');
 });
 
+document.getElementById('register-back-btn').addEventListener('click', () => {
+  switchView('booking');
+});
+
 document.getElementById('form-cancel-btn').addEventListener('click', () => {
-  switchView('overview');
+  switchView('booking');
 });
 
 document.getElementById('conf-back-btn').addEventListener('click', () => {
@@ -813,31 +968,30 @@ function handleLoginSubmit(e) {
   const identifier = identifierInput.value.trim().toLowerCase();
   const password = passwordInput.value;
   
-  // Admin login check
-  const ADMIN_EMAIL = 'mukesh710017@gmail.com';
-  const ADMIN_PASSWORD = 'mukesh@2198';
-  
   // Staff login check
   const STAFF_DOMAIN = '@snsct.org';
   const STAFF_PASSWORD = 'snsct@123';
 
-  if (identifier === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+  if (identifier.endsWith(STAFF_DOMAIN) && password === STAFF_PASSWORD) {
+    const clubId = identifier.split('@')[0];
+    const clubExists = clubsState.some(c => c.id === clubId);
+    
+    if (!clubExists) {
+      showToast('Authentication Failed', `No club found with ID: ${clubId}. Ensure your email matches [club-id]@snsct.org`, 'error');
+      passwordInput.closest('.form-group').classList.add('invalid');
+      return;
+    }
+
     currentUser = {
       email: identifier,
-      name: 'Admin User',
-      id: 'ADMIN',
-      role: 'admin'
-    };
-  } else if (identifier.endsWith(STAFF_DOMAIN) && password === STAFF_PASSWORD) {
-    currentUser = {
-      email: identifier,
-      name: identifier.split('@')[0],
+      name: clubId.charAt(0).toUpperCase() + clubId.slice(1) + ' Coordinator',
       id: 'STAFF',
-      role: 'staff'
+      role: 'staff',
+      clubId: clubId
     };
   } else {
-    // If neither match, show error
-    showToast('Authentication Failed', 'Incorrect email or password. Please try again.', 'error');
+    // Only allow staff login from the form
+    showToast('Authentication Failed', 'Incorrect staff email or password. Please try again.', 'error');
     passwordInput.closest('.form-group').classList.add('invalid');
     return;
   }
@@ -853,10 +1007,17 @@ function handleLoginSubmit(e) {
 // ==========================================
 async function renderAdminDashboard() {
   // Seed the club filter dropdown
+  const isStaff = currentUser && currentUser.role === 'staff';
   const existingClubs = new Set();
-  adminClubFilter.innerHTML = '<option value="All">All Clubs</option>';
+  
+  // Clear options
+  adminClubFilter.innerHTML = isStaff ? '' : '<option value="All">All Clubs</option>';
+
   clubsState.forEach(club => {
     if (!existingClubs.has(club.id)) {
+      // If staff, ONLY allow their own club
+      if (isStaff && club.id !== currentUser.clubId) return;
+
       existingClubs.add(club.id);
       const opt = document.createElement('option');
       opt.value = club.id;
@@ -864,6 +1025,14 @@ async function renderAdminDashboard() {
       adminClubFilter.appendChild(opt);
     }
   });
+
+  // Force selection to their club if staff
+  if (isStaff) {
+    adminClubFilter.value = currentUser.clubId;
+    adminClubFilter.disabled = true;
+  } else {
+    adminClubFilter.disabled = false;
+  }
 
   // Ensure empty state is hidden and table is visible while loading
   adminEmptyBookingsState.style.display = 'none';
@@ -879,10 +1048,15 @@ async function renderAdminDashboard() {
     bookingsState = [];
   }
 
+  // Filter bookings and clubs for stats if staff
+  const displayBookings = isStaff ? bookingsState.filter(b => b.clubId === currentUser.clubId) : bookingsState;
+  const displayClubs = isStaff ? clubsState.filter(c => c.id === currentUser.clubId) : clubsState;
+
   // Update top statistics using actual booking count
-  const totalRegistrations = bookingsState.length;
+  const totalRegistrations = displayBookings.length;
   const totalSlotsFilled = totalRegistrations;
-  const totalSlotsRemaining = clubsState.reduce((sum, c) => sum + c.slotsRemaining, 0);
+  const totalSlotsRemaining = displayClubs.reduce((sum, c) => sum + c.slotsRemaining, 0);
+  
   adminStatTotalRegistrations.textContent = totalRegistrations;
   adminStatTotalSlotsBooked.textContent = totalSlotsFilled;
   adminStatSlotsRemaining.textContent = totalSlotsRemaining;
@@ -896,6 +1070,164 @@ async function renderAdminDashboard() {
   // Wire export buttons
   exportCsvBtn.onclick = exportToExcel;
   exportPdfBtn.onclick = exportToPDF;
+
+  // Toggle report section visibility
+  const staffReportSection = document.getElementById('staff-report-section');
+  const adminReportsSection = document.getElementById('admin-reports-section');
+  const staffAttendanceSection = document.getElementById('staff-attendance-section');
+  
+  if (isStaff) {
+    if (staffReportSection) staffReportSection.style.display = 'block';
+    if (adminReportsSection) adminReportsSection.style.display = 'none';
+    if (staffAttendanceSection) staffAttendanceSection.style.display = 'block';
+    renderStaffAttendance();
+  } else {
+    if (staffReportSection) staffReportSection.style.display = 'none';
+    if (adminReportsSection) adminReportsSection.style.display = 'block';
+    if (staffAttendanceSection) staffAttendanceSection.style.display = 'none';
+    renderAdminReportsList();
+  }
+}
+
+// ==========================================
+// STAFF ATTENDANCE SYSTEM
+// ==========================================
+async function renderStaffAttendance() {
+  const tableBody = document.getElementById('attendance-table-body');
+  const emptyState = document.getElementById('staff-empty-attendance-state');
+  const datePicker = document.getElementById('attendance-date-picker');
+
+  if (!tableBody || !datePicker) return;
+
+  // Set default date to today
+  const todayStr = new Date().toISOString().split('T')[0];
+  if (!datePicker.value) datePicker.value = todayStr;
+
+  const selectedDate = datePicker.value;
+  const clubId = currentUser.clubId;
+
+  // Wire date picker change
+  datePicker.onchange = renderStaffAttendance;
+
+  // Fetch bookings for this club
+  let bookings = [];
+  try {
+    const res = await fetch('http://localhost:3000/api/bookings');
+    const all = await res.json();
+    bookings = all.filter(b => b.clubId === clubId);
+  } catch (e) {
+    showToast('Error', 'Could not fetch students list.', 'error');
+    return;
+  }
+
+  if (bookings.length === 0) {
+    tableBody.innerHTML = '';
+    if (emptyState) emptyState.style.display = 'block';
+    return;
+  }
+  if (emptyState) emptyState.style.display = 'none';
+
+  // Fetch all attendance records for this club
+  let allAttendance = [];
+  try {
+    const res = await fetch(`http://localhost:3000/api/attendance/${clubId}`);
+    allAttendance = await res.json();
+  } catch (e) {
+    console.warn('Could not fetch attendance records:', e);
+  }
+
+  // Build a map: studentEmail -> { date -> status }
+  const attendanceMap = {};
+  allAttendance.forEach(rec => {
+    if (!attendanceMap[rec.studentEmail]) attendanceMap[rec.studentEmail] = {};
+    attendanceMap[rec.studentEmail][rec.date] = rec.status;
+  });
+
+  // Get last 5 unique dates from attendance (or past 5 calendar days)
+  const past5Dates = [];
+  for (let i = 4; i >= 0; i--) {
+    const d = new Date(selectedDate);
+    d.setDate(d.getDate() - i);
+    past5Dates.push(d.toISOString().split('T')[0]);
+  }
+
+  tableBody.innerHTML = '';
+
+  bookings.forEach((booking, index) => {
+    const studentEmail = booking.studentEmail;
+    const studentName = booking.name || booking.studentName || 'Student';
+    const emailKey = studentEmail;
+
+    // Today's status for this student
+    const todayStatus = (attendanceMap[emailKey] || {})[selectedDate] || null;
+    
+    // Count total absents
+    const totalAbsent = Object.values(attendanceMap[emailKey] || {}).filter(s => s === 'ABSENT').length;
+
+    // Build history dots
+    const historyHtml = past5Dates.map(d => {
+      const dayStatus = (attendanceMap[emailKey] || {})[d];
+      const dayLabel = new Date(d + 'T00:00:00').toLocaleDateString('en', { weekday: 'short' }).charAt(0);
+      const dotClass = dayStatus === 'PRESENT' ? 'present' : dayStatus === 'ABSENT' ? 'absent' : 'none';
+      const dotIcon = dayStatus === 'PRESENT' ? '✓' : dayStatus === 'ABSENT' ? '✗' : '·';
+      return `
+        <div class="history-day">
+          <span class="history-day-label">${dayLabel}</span>
+          <div class="history-day-dot ${dotClass}">${dotIcon}</div>
+        </div>`;
+    }).join('');
+
+    // Absent badge colour
+    const badgeClass = totalAbsent === 0 ? 'low' : totalAbsent <= 3 ? 'mid' : 'high';
+
+    const row = document.createElement('tr');
+    row.dataset.email = emailKey;
+    row.innerHTML = `
+      <td style="text-align:center; color: var(--text-secondary);">${index + 1}</td>
+      <td>
+        <div class="attendance-student-info">
+          <span class="attendance-student-name">${studentName}</span>
+          <span class="attendance-student-email">${studentEmail}</span>
+        </div>
+      </td>
+      <td>
+        <div class="attendance-status-group">
+          <button class="btn-attendance present ${todayStatus === 'PRESENT' ? 'active' : ''}"
+            data-email="${emailKey}" data-name="${studentName}" data-status="PRESENT">PRESENT</button>
+          <button class="btn-attendance absent ${todayStatus === 'ABSENT' ? 'active' : ''}"
+            data-email="${emailKey}" data-name="${studentName}" data-status="ABSENT">ABSENT</button>
+        </div>
+      </td>
+      <td>
+        <div class="history-grid">${historyHtml}</div>
+      </td>
+      <td style="text-align:center;">
+        <span class="absent-badge ${badgeClass}">${totalAbsent}</span>
+      </td>
+    `;
+
+    // Attach button handlers
+    row.querySelectorAll('.btn-attendance').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const email = btn.dataset.email;
+        const name = btn.dataset.name;
+        const status = btn.dataset.status;
+        try {
+          await fetch('http://localhost:3000/api/attendance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ clubId, studentEmail: email, studentName: name, date: selectedDate, status })
+          });
+          // Re-render to show updated state
+          renderStaffAttendance();
+        } catch (err) {
+          showToast('Error', 'Could not save attendance. Check backend.', 'error');
+        }
+      });
+    });
+
+    tableBody.appendChild(row);
+  });
 }
 
 function renderAdminTable() {
@@ -948,7 +1280,7 @@ function renderAdminTable() {
         </div>
       </td>
       <td>
-        <span class="club-cell-name" style="color:${club.accentColor}">${club.icon} ${escapeHtml(club.name)}</span>
+        <span class="club-cell-name" style="color:${club.accentColor}"><img src="${club.logoUrl || ''}" style="width:24px; height:24px; border-radius:50%; margin-right:8px; vertical-align:middle; display:inline-block;"> ${escapeHtml(club.name)}</span>
         <span class="club-cell-tag">${escapeHtml(club.category || '')}</span>
         <span class="club-cell-booking-id">${escapeHtml(booking.bookingId)}</span>
       </td>
@@ -964,7 +1296,7 @@ function renderAdminTable() {
       </td>
       <td class="booking-time-cell" style="white-space:nowrap;font-size:0.8rem;color:var(--text-secondary)">${escapeHtml(booking.bookingTime || '—')}</td>
       <td class="attendance-cell">
-        <input type="checkbox" class="attendance-checkbox" data-booking-id="${escapeHtml(booking.bookingId)}"${booking.attendance ? ' checked' : ''} ${isStaff ? 'disabled' : ''} />
+        <input type="checkbox" class="attendance-checkbox" data-booking-id="${escapeHtml(booking.bookingId)}"${booking.attendance ? ' checked' : ''} />
       </td>
       <td class="actions-cell">
         <div class="action-btn-group">
@@ -997,27 +1329,27 @@ function renderAdminTable() {
     });
   });
 
-  if (!isStaff) {
-    adminTableBody.querySelectorAll('.attendance-checkbox').forEach(chk => {
-      chk.addEventListener('change', async (e) => {
-        const bId = e.target.getAttribute('data-booking-id');
-        const checked = e.target.checked;
-        const b = bookingsState.find(x => x.bookingId === bId);
-        if(b) { 
-          b.attendance = checked; 
-          try {
-            await fetch(`http://localhost:3000/api/bookings/${bId}/attendance`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ attendance: checked })
-            });
-          } catch(err) {
-            console.error('Failed to update attendance:', err);
-          }
+  adminTableBody.querySelectorAll('.attendance-checkbox').forEach(chk => {
+    chk.addEventListener('change', async (e) => {
+      const bId = e.target.getAttribute('data-booking-id');
+      const checked = e.target.checked;
+      const b = bookingsState.find(x => x.bookingId === bId);
+      if(b) { 
+        b.attendance = checked; 
+        try {
+          await fetch(`http://localhost:3000/api/bookings/${bId}/attendance`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ attendance: checked })
+          });
+        } catch(err) {
+          console.error('Failed to update attendance:', err);
         }
-      });
+      }
     });
+  });
 
+  if (!isStaff) {
     adminTableBody.querySelectorAll('.btn-table-delete').forEach(btn => {
       btn.addEventListener('click', async () => {
         const bookingId = btn.getAttribute('data-booking-id');
@@ -1035,6 +1367,105 @@ function renderAdminTable() {
         }
       });
     });
+  }
+}
+
+async function renderAdminReportsList() {
+  const reportsTableBody = document.getElementById('admin-reports-table-body');
+  const emptyReportsState = document.getElementById('admin-empty-reports-state');
+  
+  if (!reportsTableBody) return;
+  reportsTableBody.innerHTML = '';
+  
+  try {
+    const res = await fetch('http://localhost:3000/api/reports');
+    if (!res.ok) throw new Error('Failed to fetch reports');
+    const reports = await res.json();
+    
+    if (reports.length === 0) {
+      if (emptyReportsState) emptyReportsState.style.display = 'flex';
+      reportsTableBody.closest('.table-responsive-wrapper').style.display = 'none';
+      return;
+    }
+    
+    if (emptyReportsState) emptyReportsState.style.display = 'none';
+    reportsTableBody.closest('.table-responsive-wrapper').style.display = '';
+    
+    reports.forEach(report => {
+      const tr = document.createElement('tr');
+      const date = new Date(report.createdAt).toLocaleString();
+      
+      tr.innerHTML = `
+        <td>
+          <span style="font-weight: 600; color: var(--accent-teal);">${escapeHtml(report.clubName)}</span>
+          <br><small style="color: var(--text-secondary);">${escapeHtml(report.clubId)}</small>
+        </td>
+        <td>
+          <span style="color: var(--text-primary); font-size: 0.9rem;">${escapeHtml(report.submittedBy)}</span>
+        </td>
+        <td>
+          <span style="color: var(--text-secondary); font-size: 0.9rem;"><i class="fa-regular fa-file-lines"></i> ${escapeHtml(report.fileName)}</span>
+        </td>
+        <td>
+          <span style="color: var(--text-secondary); font-size: 0.9rem;">${date}</span>
+        </td>
+        <td>
+          <a href="http://localhost:3000${report.filePath}" download="${escapeHtml(report.fileName)}" class="btn btn-outline btn-sm" target="_blank">
+            <i class="fa-solid fa-download"></i> Download
+          </a>
+        </td>
+      `;
+      reportsTableBody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error('Failed to load reports:', err);
+    showToast('Reports Error', 'Could not load coordinator reports from server.', 'error');
+  }
+}
+
+async function handleReportUpload(e) {
+  e.preventDefault();
+  
+  const fileInput = document.getElementById('report-file-input');
+  if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+    showToast('Upload Failed', 'Please select a file to upload.', 'error');
+    return;
+  }
+  
+  const file = fileInput.files[0];
+  const formData = new FormData();
+  formData.append('report', file);
+  
+  // Find club name for the current logged-in staff
+  const staffClub = clubsState.find(c => c.id === currentUser.clubId);
+  const clubName = staffClub ? staffClub.name : currentUser.clubId;
+  
+  formData.append('clubId', currentUser.clubId);
+  formData.append('clubName', clubName);
+  formData.append('submittedBy', currentUser.email);
+  
+  // Show spinner
+  fullPageLoader.style.display = 'flex';
+  const loaderTitle = fullPageLoader.querySelector('h3');
+  const loaderDesc = fullPageLoader.querySelector('p');
+  if (loaderTitle) loaderTitle.textContent = 'Uploading Report...';
+  if (loaderDesc) loaderDesc.textContent = 'Storing file on server...';
+  
+  try {
+    const res = await fetch('http://localhost:3000/api/reports', {
+      method: 'POST',
+      body: formData
+    });
+    
+    if (!res.ok) throw new Error('Upload error');
+    
+    showToast('Report Submitted', 'Your club activity report has been uploaded successfully.', 'success');
+    fileInput.value = ''; // Reset input
+  } catch (err) {
+    console.error(err);
+    showToast('Upload Failed', 'Could not upload report to the server.', 'error');
+  } finally {
+    fullPageLoader.style.display = 'none';
   }
 }
 
@@ -1165,12 +1596,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Login form submit
   loginForm.addEventListener('submit', handleLoginSubmit);
+
+  // Report form submit
+  const reportForm = document.getElementById('report-upload-form');
+  if (reportForm) {
+    reportForm.addEventListener('submit', handleReportUpload);
+  }
+
+  // No longer needed, video auto-plays as background
+
 });
 
 // ==========================================
 // 10. APP STARTUP
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
+  // Check for admin URL redirect
+  if (window.location.pathname === '/admin' || window.location.hash === '#admin') {
+    currentUser = {
+      email: 'mukesh710017@gmail.com',
+      name: 'Admin User',
+      id: 'ADMIN',
+      role: 'admin'
+    };
+    localStorage.setItem(USER_SESSION_KEY, JSON.stringify(currentUser));
+    updateAuthUI();
+    
+    if (window.location.pathname === '/admin') {
+      window.history.replaceState({}, '', '/');
+    } else if (window.location.hash === '#admin') {
+      window.location.hash = '';
+    }
+    
+    switchView('admin');
+    showToast('Admin Portal', 'Logged in as administrator via /admin.', 'success');
+  }
+
   initDatabase();
   renderOverviewGrid();
 
