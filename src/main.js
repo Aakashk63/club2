@@ -19,6 +19,7 @@ let bookingsState = [];
 const MAX_SLOTS = 110; // Updated club capacity
 let intendedClubId = null;
 let selectedClubId = null;
+let currentUser = null;
 
 // Concurrency Settings State
 let simulatedRaceCondition = false;
@@ -832,10 +833,10 @@ function handleLoginSubmit(e) {
   const identifier = identifierInput.value.trim().toLowerCase();
   const password = passwordInput.value;
   
-  // Admin login: accept any email with the designated domain and a fixed password
-  const ADMIN_DOMAIN = '@snsct.org';
-  const ADMIN_PASSWORD = 'snsct@123';
-  if (identifier.endsWith(ADMIN_DOMAIN) && password === ADMIN_PASSWORD) {
+  // Admin login check
+  const ADMIN_EMAIL = 'mukesh710017@gmail.com';
+  const ADMIN_PASSWORD = 'mukesh@2198';
+  if (identifier === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
     // Create minimal admin user object
     currentUser = {
       email: identifier,
