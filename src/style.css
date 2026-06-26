@@ -3121,6 +3121,11 @@ body {
   box-sizing: border-box !important;
 }
 
+select.form-input option {
+  color: #111827 !important;
+  background-color: #ffffff !important;
+}
+
 .form-input::placeholder {
   color: var(--text-muted);
   opacity: 0.8;

@@ -33,6 +33,7 @@ let currentUser = null;
 // Concurrency Settings State
 let simulatedRaceCondition = false;
 let simulatedLatency = true;
+let isDashboardDataLoaded = false;
 
 // DOM Elements
 const views = {
@@ -959,7 +960,14 @@ function handleLoginSubmit(e) {
   const STAFF_DOMAIN = '@snsct.org';
   const STAFF_PASSWORD = 'snsct@123';
 
-  if (identifier.endsWith(STAFF_DOMAIN) && password === STAFF_PASSWORD) {
+  if (identifier === 'mukesh710017@gmail.com' && password === 'mukesh@2198') {
+    currentUser = {
+      email: identifier,
+      name: 'Admin User',
+      id: 'ADMIN',
+      role: 'admin'
+    };
+  } else if (identifier.endsWith(STAFF_DOMAIN) && password === STAFF_PASSWORD) {
     const clubId = identifier.split('@')[0];
     const clubExists = clubsState.some(c => c.id === clubId);
     
@@ -978,8 +986,8 @@ function handleLoginSubmit(e) {
       clubId: clubId
     };
   } else {
-    // Only allow staff login from the form
-    showToast('Authentication Failed', 'Incorrect staff email or password. Please try again.', 'error');
+    // Only allow staff/admin login from the form
+    showToast('Authentication Failed', 'Incorrect email or password. Please try again.', 'error');
     passwordInput.closest('.form-group').classList.add('invalid');
     if (pwdError) pwdError.textContent = 'Incorrect password.';
     return;
@@ -1023,53 +1031,6 @@ async function renderAdminDashboard() {
     adminClubFilter.disabled = false;
   }
 
-  // Ensure empty state is hidden and table is visible while loading
-  adminEmptyBookingsState.style.display = 'none';
-  adminTableBody.closest('.table-responsive-wrapper').style.display = '';
-
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/bookings`);
-    if (!res.ok) throw new Error('Response not ok');
-    bookingsState = await res.json();
-  } catch (error) {
-    console.error('Failed to fetch bookings:', error);
-    showToast('Dashboard Error', 'Could not fetch bookings from server. Is the backend running?', 'error');
-    bookingsState = [];
-  }
-
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/attendance`);
-    if (res.ok) {
-      attendanceState = await res.json();
-    }
-  } catch (error) {
-    console.error('Failed to fetch attendance state:', error);
-    attendanceState = [];
-  }
-
-  // Filter bookings and clubs for stats if staff
-  const displayBookings = isStaff ? bookingsState.filter(b => b.clubId === currentUser.clubId) : bookingsState;
-  const displayClubs = isStaff ? clubsState.filter(c => c.id === currentUser.clubId) : clubsState;
-
-  // Update top statistics using actual booking count
-  const totalRegistrations = displayBookings.length;
-  const totalSlotsFilled = totalRegistrations;
-  const totalSlotsRemaining = displayClubs.reduce((sum, c) => sum + c.slotsRemaining, 0);
-  
-  adminStatTotalRegistrations.textContent = totalRegistrations;
-  adminStatTotalSlotsBooked.textContent = totalSlotsFilled;
-  adminStatSlotsRemaining.textContent = totalSlotsRemaining;
-
-  renderAdminTable();
-
-  // Wire up search and filter listeners (only once)
-  adminSearchInput.oninput = renderAdminTable;
-  adminClubFilter.onchange = renderAdminTable;
-  
-  // Wire export buttons
-  exportCsvBtn.onclick = exportToExcel;
-  exportPdfBtn.onclick = exportToPDF;
-
   // Toggle report section visibility and move elements to/from modals based on role
   const staffReportSection = document.getElementById('staff-report-section');
   const adminReportsSection = document.getElementById('admin-reports-section');
@@ -1110,6 +1071,81 @@ async function renderAdminDashboard() {
     if (staffAttendanceSection) staffAttendanceSection.style.display = 'none';
     renderAdminReportsList();
   }
+
+  // Ensure empty state is hidden and table is visible while loading
+  adminEmptyBookingsState.style.display = 'none';
+  adminTableBody.closest('.table-responsive-wrapper').style.display = '';
+
+  // Show loading indicators immediately
+  adminTableBody.innerHTML = `
+    <tr>
+      <td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+          <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem; color: var(--accent-teal);"></i>
+          <span>Waking up database server... please wait.</span>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  isDashboardDataLoaded = false;
+  if (isStaff) {
+    renderStaffAttendance();
+  }
+
+  // Fetch bookings & attendance in parallel
+  Promise.all([
+    fetch(`${API_BASE_URL}/api/bookings`).then(res => {
+      if (!res.ok) throw new Error('Failed to fetch bookings');
+      return res.json();
+    }),
+    fetch(`${API_BASE_URL}/api/attendance`).then(res => {
+      if (!res.ok) throw new Error('Failed to fetch attendance');
+      return res.json();
+    })
+  ]).then(([bookings, attendance]) => {
+    bookingsState = bookings;
+    attendanceState = attendance;
+    isDashboardDataLoaded = true;
+
+    // Filter bookings and clubs for stats if staff
+    const displayBookings = isStaff ? bookingsState.filter(b => b.clubId === currentUser.clubId) : bookingsState;
+    const displayClubs = isStaff ? clubsState.filter(c => c.id === currentUser.clubId) : clubsState;
+
+    // Update top statistics using actual booking count
+    const totalRegistrations = displayBookings.length;
+    const totalSlotsFilled = totalRegistrations;
+    const totalSlotsRemaining = displayClubs.reduce((sum, c) => sum + c.slotsRemaining, 0);
+    
+    adminStatTotalRegistrations.textContent = totalRegistrations;
+    adminStatTotalSlotsBooked.textContent = totalSlotsFilled;
+    adminStatSlotsRemaining.textContent = totalSlotsRemaining;
+
+    renderAdminTable();
+
+    if (isStaff) {
+      renderStaffAttendance();
+    }
+  }).catch(error => {
+    console.error('Failed to load dashboard data:', error);
+    showToast('Dashboard Error', 'Could not sync data with server.', 'error');
+    adminTableBody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align: center; padding: 3rem; color: var(--accent-red);">
+          <i class="fa-solid fa-triangle-exclamation" style="font-size: 2rem; margin-bottom: 10px;"></i>
+          <p>Failed to connect to database server. Please reload or try again.</p>
+        </td>
+      </tr>
+    `;
+  });
+
+  // Wire up search and filter listeners (only once)
+  adminSearchInput.oninput = renderAdminTable;
+  adminClubFilter.onchange = renderAdminTable;
+  
+  // Wire export buttons
+  exportCsvBtn.onclick = exportToExcel;
+  exportPdfBtn.onclick = exportToPDF;
 }
 
 // ==========================================
@@ -1161,16 +1197,22 @@ async function renderStaffAttendance() {
   // Wire date picker change
   datePicker.onchange = renderStaffAttendance;
 
-  // Fetch bookings for this club
-  let bookings = [];
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/bookings`);
-    const all = await res.json();
-    bookings = all.filter(b => b.clubId === clubId);
-  } catch (e) {
-    showToast('Error', 'Could not fetch students list.', 'error');
+  if (!isDashboardDataLoaded) {
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 1.5rem; color: var(--accent-green);"></i>
+            <span>Loading student list...</span>
+          </div>
+        </td>
+      </tr>
+    `;
+    if (emptyState) emptyState.style.display = 'none';
     return;
   }
+
+  const bookings = bookingsState.filter(b => b.clubId === clubId);
 
   if (bookings.length === 0) {
     tableBody.innerHTML = '';
@@ -1179,14 +1221,7 @@ async function renderStaffAttendance() {
   }
   if (emptyState) emptyState.style.display = 'none';
 
-  // Fetch all attendance records for this club
-  let allAttendance = [];
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/attendance/${clubId}`);
-    allAttendance = await res.json();
-  } catch (e) {
-    console.warn('Could not fetch attendance records:', e);
-  }
+  const allAttendance = attendanceState.filter(rec => rec.clubId === clubId);
 
   // Build a map: studentEmail -> { date -> status }
   const attendanceMap = {};
@@ -1511,12 +1546,26 @@ async function renderAdminReportsList() {
   const emptyReportsState = document.getElementById('admin-empty-reports-state');
   
   if (!reportsTableBody) return;
-  reportsTableBody.innerHTML = '';
+  
+  // Show spinner immediately
+  reportsTableBody.closest('.table-responsive-wrapper').style.display = '';
+  if (emptyReportsState) emptyReportsState.style.display = 'none';
+  reportsTableBody.innerHTML = `
+    <tr>
+      <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 1.5rem; color: var(--accent-orange);"></i>
+          <span>Loading reports...</span>
+        </div>
+      </td>
+    </tr>
+  `;
   
   try {
     const res = await fetch(`${API_BASE_URL}/api/reports`);
     if (!res.ok) throw new Error('Failed to fetch reports');
     const reports = await res.json();
+    reportsTableBody.innerHTML = '';
     
     if (reports.length === 0) {
       if (emptyReportsState) emptyReportsState.style.display = 'flex';
@@ -1556,6 +1605,14 @@ async function renderAdminReportsList() {
   } catch (err) {
     console.error('Failed to load reports:', err);
     showToast('Reports Error', 'Could not load coordinator reports from server.', 'error');
+    reportsTableBody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align: center; padding: 2rem; color: var(--accent-red);">
+          <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.5rem; margin-bottom: 5px;"></i>
+          <p>Failed to load reports. Please try again.</p>
+        </td>
+      </tr>
+    `;
   }
 }
 
