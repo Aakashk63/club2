@@ -394,7 +394,7 @@ function renderOverviewGrid() {
     card.style.overflow = 'hidden';
 
     card.innerHTML = `
-      <div class="club-card-header" style="height: 100px; background: ${club.coverUrl ? `url('${club.coverUrl}') center/cover no-repeat` : club.accentColor}; position: relative; z-index: 1; ${club.coverUrl ? 'opacity: 1;' : 'opacity: 0.9;'}"></div>
+      <div class="club-card-header" style="height: 140px; background: ${club.coverUrl ? `url('${club.coverUrl}') center/cover no-repeat` : club.accentColor}; position: relative; z-index: 1; ${club.coverUrl ? 'opacity: 1;' : 'opacity: 0.9;'}"></div>
       <div style="position: relative; z-index: 2;">
         <div class="club-card-avatar" style="background: ${club.accentColor}; top: -30px; overflow: hidden; padding: 2px;">
           <img src="${club.logoUrl || ''}" alt="${club.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; background: #fff;">

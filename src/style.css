@@ -2701,6 +2701,7 @@ body {
     display: flex !important;
     flex-direction: column !important;
     gap: 1.5rem;
+    align-items: stretch !important;
   }
   .club-detail-main,
   .club-detail-sidebar {
