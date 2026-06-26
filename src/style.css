@@ -3170,3 +3170,161 @@ input[type="date"].form-input::-webkit-calendar-picker-indicator:hover {
   border-color: var(--accent-teal);
   box-shadow: 0 0 8px rgba(0, 242, 254, 0.25);
 }
+
+/* ==========================================
+   12. EXTRA RESPONSIVE FIXES (MOBILE & TABLET)
+   ========================================== */
+
+@media (max-width: 768px) {
+  /* Prevent sticky navbar from blocking viewport on mobile */
+  .navbar {
+    position: relative !important;
+    padding: 16px 20px !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    height: auto !important;
+    min-height: auto !important;
+  }
+  
+  .navbar-actions {
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  .search-wrapper, .filter-wrapper {
+    width: 100% !important;
+  }
+
+  /* Compact padding for mobile viewports */
+  .main-content {
+    padding: 16px 12px 40px 12px !important;
+  }
+
+  /* Compact glass card padding */
+  .glass-card {
+    padding: 16px !important;
+  }
+
+  /* Form spacing layout fixes */
+  .form-row {
+    flex-direction: column !important;
+    gap: 16px !important;
+  }
+
+  /* Digital ticket layout improvements */
+  .digital-ticket {
+    border-radius: var(--border-radius-md) !important;
+  }
+  .ticket-top {
+    padding: 20px !important;
+    display: flex !important;
+    flex-direction: column-reverse !important;
+    gap: 12px !important;
+  }
+  .ticket-branding {
+    position: static !important;
+    align-self: flex-start !important;
+  }
+  .ticket-header-main h3 {
+    font-size: 20px !important;
+  }
+  .ticket-body {
+    padding: 20px !important;
+  }
+
+  /* Profile Dropdown positioning on mobile */
+  .profile-dropdown {
+    right: 50% !important;
+    transform: translateX(50%) translateY(10px) !important;
+    width: 280px !important;
+  }
+  .profile-dropdown.show {
+    transform: translateX(50%) translateY(0) !important;
+  }
+
+  /* Admin Dashboard responsive adjustments */
+  .view-header-nav {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    margin-bottom: 20px !important;
+  }
+  .admin-table-controls {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+  .controls-inputs {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    gap: 10px !important;
+  }
+  .controls-inputs .form-input,
+  .controls-inputs select,
+  .controls-inputs button {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Modal responsiveness */
+  .modal-content {
+    padding: 16px !important;
+    width: 95% !important;
+    max-height: 95vh !important;
+  }
+  
+  /* Club detail hero image overlay for vertical stack */
+  .hero-overlay {
+    background: linear-gradient(180deg, rgba(10, 10, 15, 0.6) 0%, rgba(10, 10, 15, 0.95) 100%) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra tiny screens */
+  .clubs-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  .auth-card {
+    padding: 20px !important;
+  }
+  .hero-text-content h1 {
+    font-size: 24px !important;
+  }
+  .hero-text-content p {
+    font-size: 13px !important;
+  }
+  .hero-stats {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+  .stat-divider {
+    display: none !important;
+  }
+  .stat-item {
+    border-right: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding-bottom: 8px !important;
+  }
+  .stat-item:last-child {
+    border-bottom: none !important;
+  }
+}
+
+/* Ensure filter dropdown options are readable on all mobile platforms */
+.filter-wrapper select option,
+.form-group select option {
+  color: #111827 !important;
+  background-color: #ffffff !important;
+}
+
+/* Make custom select options box solid */
+.custom-select-options {
+  background-color: #12121c !important;
+}
