@@ -106,6 +106,7 @@ export const CLUBS_DATA = [
     description: "Round Square is built around the six IDEALS: Internationalism, Democracy, Environmentalism, Adventure, Leadership, and Service. We coordinate student exchange ideas, global conference delegations, and local community service projects to shape open-minded, proactive global leaders.",
     accentColor: "linear-gradient(135deg, #4568DC 0%, #B06AB3 100%)",
     logoUrl: "/clublogos/Round%20square.png",
+    coverUrl: "/cover_images/Round square club.jpeg",
     coordinator: { name: "Dr. Ramesh N.", title: "Faculty Coordinator", dept: "International Studies" }
   },
   {
