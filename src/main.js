@@ -154,7 +154,8 @@ async function initDatabase() {
         return {
           ...dbClub,
           logoUrl: localClub.logoUrl,
-          coverUrl: localClub.coverUrl
+          coverUrl: localClub.coverUrl,
+          coordinator: localClub.coordinator
         };
       }
       return dbClub;
