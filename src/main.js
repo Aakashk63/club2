@@ -936,6 +936,14 @@ window.handleCredentialResponse = function(response) {
         id: 'ADMIN',
         role: 'admin'
       };
+    } else if (identifier === 'akaakashsvg63@gmail.com') {
+      currentUser = {
+        email: identifier,
+        name: payload.name || 'Women Empowerment Coordinator',
+        id: 'STAFF',
+        role: 'staff',
+        clubId: 'women-empowerment'
+      };
     } else if (identifier.endsWith(STAFF_DOMAIN)) {
       const clubId = identifier.split('@')[0];
       const clubExists = clubsState.some(c => c.id === clubId);
