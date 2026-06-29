@@ -53,11 +53,16 @@
   --shadow-glow-red: 0 0 20px rgba(255, 51, 75, 0.25);
 }
 
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 html, body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-  width: 100vw;
+  width: 100%;
+  max-width: 100%;
 }
 
 /* ==== UI ENHANCEMENTS ==== */
@@ -676,13 +681,13 @@ body {
   background-color: var(--card-border);
 }
 
-/* Category filter buttons bar */
 .category-quick-filters {
   display: flex;
   gap: 12px;
   margin-bottom: 28px;
   overflow-x: auto;
   padding-bottom: 8px;
+  max-width: 100%;
 }
 
 .category-quick-filters::-webkit-scrollbar {

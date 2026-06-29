@@ -74,7 +74,7 @@ export const CLUBS_DATA = [
     accentColor: "linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)",
     logoUrl: "/clublogos/robotic.png",
     coverUrl: "/cover_images/Robotics.png",
-    coordinator: { name: "AAKASH K", title: "Faculty Coordinator", dept: "Electronics & Communication" }
+    coordinator: { name: "MUKESH G", title: "Faculty Coordinator", dept: "Electronics & Communication" }
   },
   {
     id: "toast-masters",
