@@ -1,0 +1,1 @@
+const fs = require('fs'); let c = fs.readFileSync('src/data/clubs.js', 'utf8'); c = c.replace(/coordinator: \{ name: "[^"]+"/g, 'coordinator: { name: "AAKASH K"'); fs.writeFileSync('src/data/clubs.js', c);

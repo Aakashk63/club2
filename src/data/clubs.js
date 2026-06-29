@@ -8,7 +8,7 @@ export const CLUBS_DATA = [
     accentColor: "linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%)",
     logoUrl: "/clublogos/rotaract.png",
     coverUrl: "/cover_images/Rotaract.png",
-    coordinator: { name: "Dr. Priya Shankar", title: "Faculty Coordinator", dept: "Civil Engineering" }
+    coordinator: { name: "AAKASH K", title: "Faculty Coordinator", dept: "Civil Engineering" }
   },
   {
     id: "pets",
@@ -19,7 +19,7 @@ export const CLUBS_DATA = [
     accentColor: "linear-gradient(135deg, #f12711 0%, #f5af19 100%)",
     logoUrl: "/clublogos/pets%20club.png",
     coverUrl: "/cover_images/petsclub.png",
-    coordinator: { name: "Dr. Meenakshi R.", title: "Faculty Coordinator", dept: "Biotechnology" }
+    coordinator: { name: "AAKASH K", title: "Faculty Coordinator", dept: "Biotechnology" }
   },
   {
     id: "travel-trek",
@@ -30,7 +30,7 @@ export const CLUBS_DATA = [
     accentColor: "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)",
     logoUrl: "/clublogos/Travel%20trek.png",
     coverUrl: "/cover_images/Travel Trek.jpeg",
-    coordinator: { name: "Dr. Suresh Kumar", title: "Faculty Coordinator", dept: "Physical Education" }
+    coordinator: { name: "AAKASH K", title: "Faculty Coordinator", dept: "Physical Education" }
   },
   {
     id: "gear-shifters",
@@ -41,7 +41,7 @@ export const CLUBS_DATA = [
     accentColor: "linear-gradient(135deg, #3a7bd5 0%, #3a6073 100%)",
     logoUrl: "/clublogos/Gear%20shifters.png",
     coverUrl: "/cover_images/Gear Shifters.jpeg",
-    coordinator: { name: "Dr. Karthik Raj", title: "Faculty Coordinator", dept: "Mechanical Engineering" }
+    coordinator: { name: "AAKASH K", title: "Faculty Coordinator", dept: "Mechanical Engineering" }
   },
   {
     id: "arts-with-hearts",
@@ -52,7 +52,7 @@ export const CLUBS_DATA = [
     accentColor: "linear-gradient(135deg, #FC466B 0%, #3F5EFB 100%)",
     logoUrl: "/clublogos/arts%20with%20hearts.png",
     coverUrl: "/cover_images/Arts%20with%20Hearts.png",
-    coordinator: { name: "Prof. Lavanya M.", title: "Faculty Coordinator", dept: "Fine Arts" }
+    coordinator: { name: "AAKASH K", title: "Faculty Coordinator", dept: "Fine Arts" }
   },
   {
     id: "santa-365",
@@ -63,7 +63,7 @@ export const CLUBS_DATA = [
     accentColor: "linear-gradient(135deg, #e52d27 0%, #b31217 100%)",
     logoUrl: "/clublogos/santa%20365.png",
     coverUrl: "/cover_images/Santa%20365.png",
-    coordinator: { name: "Dr. Vijayalakshmi S.", title: "Faculty Coordinator", dept: "Social Sciences" }
+    coordinator: { name: "AAKASH K", title: "Faculty Coordinator", dept: "Social Sciences" }
   },
   {
     id: "robotics",
@@ -74,7 +74,7 @@ export const CLUBS_DATA = [
     accentColor: "linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)",
     logoUrl: "/clublogos/robotic.png",
     coverUrl: "/cover_images/Robotics.png",
-    coordinator: { name: "Dr. Balaji P.", title: "Faculty Coordinator", dept: "Electronics & Communication" }
+    coordinator: { name: "AAKASH K", title: "Faculty Coordinator", dept: "Electronics & Communication" }
   },
   {
     id: "toast-masters",
@@ -85,7 +85,7 @@ export const CLUBS_DATA = [
     accentColor: "linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)",
     logoUrl: "/clublogos/ToastMasters.png",
     coverUrl: "/cover_images/Toast masters .jpeg",
-    coordinator: { name: "Prof. Anitha J.", title: "Faculty Coordinator", dept: "English & Languages" }
+    coordinator: { name: "AAKASH K", title: "Faculty Coordinator", dept: "English & Languages" }
   },
   {
     id: "dance-feel-beat",
@@ -96,7 +96,7 @@ export const CLUBS_DATA = [
     accentColor: "linear-gradient(135deg, #f80759 0%, #bc4e9c 100%)",
     logoUrl: "/clublogos/Dance%20Club.png",
     coverUrl: "/cover_images/Dance.png",
-    coordinator: { name: "Prof. Deepa R.", title: "Faculty Coordinator", dept: "Performing Arts" }
+    coordinator: { name: "AAKASH K", title: "Faculty Coordinator", dept: "Performing Arts" }
   },
   {
     id: "round-square",
@@ -107,7 +107,7 @@ export const CLUBS_DATA = [
     accentColor: "linear-gradient(135deg, #4568DC 0%, #B06AB3 100%)",
     logoUrl: "/clublogos/Round%20square.png",
     coverUrl: "/cover_images/Round square club.jpeg",
-    coordinator: { name: "Dr. Ramesh N.", title: "Faculty Coordinator", dept: "International Studies" }
+    coordinator: { name: "AAKASH K", title: "Faculty Coordinator", dept: "International Studies" }
   },
   {
     id: "imun",
@@ -118,7 +118,7 @@ export const CLUBS_DATA = [
     accentColor: "linear-gradient(135deg, #1f4068 0%, #162447 100%)",
     logoUrl: "/clublogos/imun.png",
     coverUrl: "/cover_images/IMUN.png",
-    coordinator: { name: "Dr. Shantha G.", title: "Faculty Coordinator", dept: "Political Science" }
+    coordinator: { name: "AAKASH K", title: "Faculty Coordinator", dept: "Political Science" }
   },
   {
     id: "young-entrepreneur",
@@ -129,7 +129,7 @@ export const CLUBS_DATA = [
     accentColor: "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)",
     logoUrl: "/clublogos/Young%20Entrepreneur.png",
     coverUrl: "/cover_images/Young Entrepreneur.jpeg",
-    coordinator: { name: "Dr. Mani K.", title: "Faculty Coordinator", dept: "Business Administration" }
+    coordinator: { name: "AAKASH K", title: "Faculty Coordinator", dept: "Business Administration" }
   },
   {
     id: "foodies-hub",
@@ -140,7 +140,7 @@ export const CLUBS_DATA = [
     accentColor: "linear-gradient(135deg, #F09819 0%, #EDDE5D 100%)",
     logoUrl: "/clublogos/Foodies%20Club.png",
     coverUrl: "/cover_images/Foodies Hub.jpeg",
-    coordinator: { name: "Prof. Saravanan C.", title: "Faculty Coordinator", dept: "Hotel Management" }
+    coordinator: { name: "AAKASH K", title: "Faculty Coordinator", dept: "Hotel Management" }
   },
   {
     id: "snapture",
@@ -151,7 +151,7 @@ export const CLUBS_DATA = [
     accentColor: "linear-gradient(135deg, #0f2027 0%, #203a43 100%, #2c5364 100%)",
     logoUrl: "/clublogos/Photoggraphy.png",
     coverUrl: "/cover_images/Photography.png",
-    coordinator: { name: "Prof. Naveen T.", title: "Faculty Coordinator", dept: "Visual Communication" }
+    coordinator: { name: "AAKASH K", title: "Faculty Coordinator", dept: "Visual Communication" }
   },
   {
     id: "fashion-studio",
@@ -162,7 +162,7 @@ export const CLUBS_DATA = [
     accentColor: "linear-gradient(135deg, #DA22FF 0%, #9733EE 100%)",
     logoUrl: "/clublogos/fashion.png",
     coverUrl: "/cover_images/Fashion%20club.png",
-    coordinator: { name: "Prof. Sindhu A.", title: "Faculty Coordinator", dept: "Fashion Technology" }
+    coordinator: { name: "AAKASH K", title: "Faculty Coordinator", dept: "Fashion Technology" }
   },
   {
     id: "women-empowerment",
@@ -184,7 +184,7 @@ export const CLUBS_DATA = [
     accentColor: "linear-gradient(135deg, #8A2387 0%, #E94057 50%, #F27121 100%)",
     logoUrl: "/clublogos/music%20club.png",
     coverUrl: "/cover_images/Music.png",
-    coordinator: { name: "Prof. Arun K.", title: "Faculty Coordinator", dept: "Music & Performing Arts" }
+    coordinator: { name: "AAKASH K", title: "Faculty Coordinator", dept: "Music & Performing Arts" }
   },
   {
     id: "aero-modelling",
@@ -195,6 +195,6 @@ export const CLUBS_DATA = [
     accentColor: "linear-gradient(135deg, #1D976C 0%, #93F9B9 100%)",
     logoUrl: "/clublogos/Aero%20Modelling.png",
     coverUrl: "/cover_images/Aero%20Modelling.png",
-    coordinator: { name: "Dr. Prasanth M.", title: "Faculty Coordinator", dept: "Aeronautical Engineering" }
+    coordinator: { name: "AAKASH K", title: "Faculty Coordinator", dept: "Aeronautical Engineering" }
   }
 ];
