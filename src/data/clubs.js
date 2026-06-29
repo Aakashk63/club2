@@ -173,7 +173,7 @@ export const CLUBS_DATA = [
     accentColor: "linear-gradient(135deg, #EA384D 0%, #D31027 100%)",
     logoUrl: "/clublogos/women%20empowerment.png",
     coverUrl: "/cover_images/womenempowerment.png",
-    coordinator: { name: "Dr. Rekha P.", title: "Faculty Coordinator", dept: "Women Studies" }
+    coordinator: { name: "AAKASH K", title: "Faculty Coordinator", dept: "Women Studies" }
   },
   {
     id: "rhythm-lounge",

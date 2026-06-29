@@ -53,6 +53,13 @@
   --shadow-glow-red: 0 0 20px rgba(255, 51, 75, 0.25);
 }
 
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  width: 100vw;
+}
+
 /* ==== UI ENHANCEMENTS ==== */
 /* Glass‑morphism enhancement */
 .glass-card {
