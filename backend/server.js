@@ -45,13 +45,35 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 mongoose.connect(process.env.MONGO_URI)
-.then(() => console.log('Connected to MongoDB'))
+.then(async () => {
+  console.log('Connected to MongoDB');
+  try {
+    const adminEmail = 'akaakashsvg63@gmail.com';
+    const admin = await User.findOne({ email: adminEmail });
+    if (!admin) {
+      await User.create({ name: 'Admin User', email: adminEmail, password: 'mukesh@2198', role: 'admin' });
+    }
+    const staffEmail = 'mukesh710017@gmail.com';
+    const staff = await User.findOne({ email: staffEmail });
+    if (!staff) {
+      await User.create({ name: 'Robotics Coordinator', email: staffEmail, password: 'mukesh@2198', role: 'staff', clubId: 'robotics' });
+    }
+  } catch (err) {
+    console.error('Error seeding initial users:', err);
+  }
+})
 .catch(err => console.error('MongoDB connection error:', err));
 
 // Seed Clubs Route (Initial Data Load)
 app.post('/api/clubs/seed', async (req, res) => {
   try {
-    const clubs = req.body;
+    const clubs = req.body.map(c => ({
+      ...c,
+      slotsFirstYear: 110,
+      slotsSecondYear: 110,
+      slotsThirdYear: 110,
+      slotsFourthYear: 110
+    }));
     await Club.deleteMany({});
     await Club.insertMany(clubs);
     res.json({ message: 'Clubs seeded successfully' });
@@ -63,7 +85,18 @@ app.post('/api/clubs/seed', async (req, res) => {
 // Get all clubs
 app.get('/api/clubs', async (req, res) => {
   try {
-    const clubs = await Club.find();
+    const { year } = req.query;
+    let clubs = await Club.find().lean();
+    if (year) {
+      clubs = clubs.map(c => {
+        let slots = c.slotsRemaining;
+        if (year === 'First Year') slots = c.slotsFirstYear;
+        else if (year === 'Second Year') slots = c.slotsSecondYear;
+        else if (year === 'Third Year') slots = c.slotsThirdYear;
+        else if (year === 'Fourth Year') slots = c.slotsFourthYear;
+        return { ...c, slotsRemaining: slots !== undefined ? slots : c.slotsRemaining };
+      });
+    }
     res.json(clubs);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -85,7 +118,14 @@ app.put('/api/clubs/:id/slots', async (req, res) => {
 app.put('/api/clubs/reset-all', async (req, res) => {
   try {
     const { capacity } = req.body;
-    await Club.updateMany({}, { slotsRemaining: capacity || 100 });
+    const cap = capacity || 110;
+    await Club.updateMany({}, { 
+      slotsRemaining: cap,
+      slotsFirstYear: cap,
+      slotsSecondYear: cap,
+      slotsThirdYear: cap,
+      slotsFourthYear: cap
+    });
     const clubs = await Club.find();
     res.json(clubs);
   } catch (error) {
@@ -120,8 +160,17 @@ app.post('/api/bookings', async (req, res) => {
     
     // Check if slot available
     const club = await Club.findOne({ id: bookingDetails.clubId });
-    if (!club || club.slotsRemaining <= 0) {
-      return res.status(409).json({ error: 'Conflict: No slots remaining' });
+    if (!club) return res.status(404).json({ error: 'Club not found' });
+    
+    const year = bookingDetails.studentYear;
+    let currentSlots = club.slotsRemaining;
+    if (year === 'First Year') currentSlots = club.slotsFirstYear;
+    else if (year === 'Second Year') currentSlots = club.slotsSecondYear;
+    else if (year === 'Third Year') currentSlots = club.slotsThirdYear;
+    else if (year === 'Fourth Year') currentSlots = club.slotsFourthYear;
+
+    if (currentSlots <= 0) {
+      return res.status(409).json({ error: 'Conflict: No slots remaining for your year' });
     }
 
     // Check duplicate (One club per student)
@@ -131,7 +180,12 @@ app.post('/api/bookings', async (req, res) => {
     }
 
     // Decrement slots
-    club.slotsRemaining -= 1;
+    if (year === 'First Year') club.slotsFirstYear -= 1;
+    else if (year === 'Second Year') club.slotsSecondYear -= 1;
+    else if (year === 'Third Year') club.slotsThirdYear -= 1;
+    else if (year === 'Fourth Year') club.slotsFourthYear -= 1;
+    else club.slotsRemaining -= 1;
+
     await club.save();
 
     const booking = new Booking(bookingDetails);
@@ -259,6 +313,26 @@ app.post('/api/auth/signup', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    
+    // Auto-create staff if @snsct.org and correct default password
+    if (email.endsWith('@snsct.org') && password === 'snsct@123') {
+      let staffUser = await User.findOne({ email });
+      if (!staffUser) {
+        const clubId = email.split('@')[0];
+        const clubExists = await Club.findOne({ id: clubId });
+        if (clubExists) {
+          staffUser = new User({ 
+            email, 
+            name: clubId.charAt(0).toUpperCase() + clubId.slice(1) + ' Coordinator',
+            password,
+            role: 'staff',
+            clubId
+          });
+          await staffUser.save();
+        }
+      }
+    }
+
     const user = await User.findOne({ email, password });
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
@@ -271,10 +345,10 @@ app.post('/api/auth/login', async (req, res) => {
 
 app.post('/api/auth/google', async (req, res) => {
   try {
-    const { email, name, role } = req.body;
+    const { email, name, role, year } = req.body;
     let user = await User.findOne({ email });
     if (!user) {
-      user = new User({ email, name, password: 'google-oauth', role: role || 'student' });
+      user = new User({ email, name, password: 'google-oauth', role: role || 'student', year });
       await user.save();
     }
     res.json(user);

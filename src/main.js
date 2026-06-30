@@ -132,8 +132,20 @@ const exportPdfBtn = document.getElementById('export-pdf-btn');
 // 2. MOCK DATABASE (LOCALSTORAGE)
 // ==========================================
 async function initDatabase() {
+  // Initialize User Session
+  const sessionData = localStorage.getItem(USER_SESSION_KEY);
+  if (sessionData) {
+    try {
+      currentUser = JSON.parse(sessionData);
+      updateAuthUI();
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
   try {
-    const res = await fetch(`${API_BASE_URL}/api/clubs`);
+    const yearQuery = (currentUser && currentUser.year) ? `?year=${encodeURIComponent(currentUser.year)}` : '';
+    const res = await fetch(`${API_BASE_URL}/api/clubs${yearQuery}`);
     let data = await res.json();
     
     if (!data || data.length === 0) {
@@ -144,7 +156,7 @@ async function initDatabase() {
         body: JSON.stringify(CLUBS_DATA.map(club => ({ ...club, slotsRemaining: MAX_SLOTS })))
       });
       if (seedRes.ok) {
-        const fetchRes = await fetch(`${API_BASE_URL}/api/clubs`);
+        const fetchRes = await fetch(`${API_BASE_URL}/api/clubs${yearQuery}`);
         data = await fetchRes.json();
       }
     }
@@ -170,17 +182,6 @@ async function initDatabase() {
     showToast('Backend Connection Failed', 'Could not fetch clubs from database.', 'error');
   }
 
-  // Initialize User Session
-  const sessionData = localStorage.getItem(USER_SESSION_KEY);
-  if (sessionData) {
-    try {
-      currentUser = JSON.parse(sessionData);
-      updateAuthUI();
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
   if (!currentUser) {
     switchView('login');
   } else if (views.login.classList.contains('active')) {
@@ -194,6 +195,22 @@ function updateAuthUI() {
     authLoggedIn.style.display = 'block';
 
     const adminDashboardBtn = document.getElementById('dropdown-admin-dashboard-btn');
+    const studentYearEl = document.getElementById('dropdown-student-year');
+    
+    if (studentYearEl) {
+      if (currentUser.year) {
+        studentYearEl.textContent = currentUser.year;
+        studentYearEl.style.display = 'block';
+      } else {
+        studentYearEl.style.display = 'none';
+      }
+    }
+
+    const heroBadge = document.querySelector('.hero-badge');
+    if (heroBadge) {
+      heroBadge.textContent = currentUser.year ? `${currentUser.year} Portal` : "Campus Life 2026";
+    }
+
     if (currentUser.role === 'admin') {
       navUserAvatar.textContent = '🛡';
       navUserName.textContent = 'Admin';
@@ -597,6 +614,16 @@ function updateBookingPageView(clubId) {
   registrationForm.querySelectorAll('select').forEach(sel => {
     sel.removeAttribute('disabled');
   });
+
+  if (currentUser) {
+    const nameInput = document.getElementById('student-name');
+    const emailInput = document.getElementById('student-email');
+    const yearSelect = document.getElementById('student-year');
+    
+    if (nameInput && currentUser.name) nameInput.value = currentUser.name;
+    if (emailInput && currentUser.email) emailInput.value = currentUser.email;
+    if (yearSelect && currentUser.year) yearSelect.value = currentUser.year;
+  }
 }
 
 
@@ -1062,6 +1089,34 @@ document.getElementById('download-ticket-btn').addEventListener('click', async (
 // ==========================================
 // A. ADMIN LOGIN HANDLER
 // ==========================================
+
+function getStudentYearFromEmail(email) {
+  const currentYear = new Date().getFullYear();
+  const localPart = email.split('@')[0];
+  const matches = localPart.match(/\d{2,4}/g);
+  
+  if (matches) {
+    for (let numStr of matches) {
+      let year = parseInt(numStr, 10);
+      if (numStr.length === 2) {
+        year += 2000;
+      }
+      
+      let diff = currentYear - year;
+      if (diff === 0) {
+        return "First Year";
+      } else if (diff === 1) {
+        return "Second Year";
+      } else if (diff === 2) {
+        return "Third Year";
+      } else if (diff === 3) {
+        return "Fourth Year";
+      }
+    }
+  }
+  return "First Year"; // Fallback
+}
+
 window._actualGoogleAuthHandler = async function(response) {
   try {
     const base64Url = response.credential.split('.')[1];
@@ -1100,7 +1155,8 @@ window._actualGoogleAuthHandler = async function(response) {
         body: JSON.stringify({ 
           email: identifier, 
           name: payload.name || (tempRole === 'staff' ? 'Coordinator' : 'Student'),
-          role: tempRole
+          role: tempRole,
+          year: tempRole === 'student' ? getStudentYearFromEmail(identifier) : undefined
         })
       });
       if (!res.ok) {
@@ -1114,7 +1170,8 @@ window._actualGoogleAuthHandler = async function(response) {
       email: identifier,
       name: payload.name || (tempRole === 'staff' ? 'Coordinator' : 'Student'),
       id: tempRole.toUpperCase(),
-      role: tempRole
+      role: tempRole,
+      year: tempRole === 'student' ? getStudentYearFromEmail(identifier) : undefined
     };
 
     if (tempClubId) {
@@ -1124,6 +1181,7 @@ window._actualGoogleAuthHandler = async function(response) {
     currentUser = newUserSession;
     localStorage.setItem(USER_SESSION_KEY, JSON.stringify(currentUser));
     updateAuthUI();
+    initDatabase(); // Refresh slots for specific year
     showToast('Login Successful', `Welcome, ${currentUser.name}!`, 'success');
     
     if (currentUser.role === 'admin' || currentUser.role === 'staff') {
@@ -1177,24 +1235,6 @@ async function handleLoginSubmit(e) {
   const identifier = identifierInput.value.trim().toLowerCase();
   const password = passwordInput.value;
   
-  const STAFF_DOMAIN = '@snsct.org';
-  const STAFF_PASSWORD = 'snsct@123';
-
-  if ((identifier === 'akaakashsvg63@gmail.com' || identifier === 'aakashsvg63@gmail.com') && password === 'mukesh@2198') {
-    currentUser = { email: identifier, name: 'Admin User', id: 'ADMIN', role: 'admin' };
-  } else if (identifier === 'mukesh710017@gmail.com' && password === 'mukesh@2198') {
-    currentUser = { email: identifier, name: 'Robotics Coordinator', id: 'STAFF', role: 'staff', clubId: 'robotics' };
-  } else if (identifier.endsWith(STAFF_DOMAIN) && password === STAFF_PASSWORD) {
-    const clubId = identifier.split('@')[0];
-    const clubExists = clubsState.some(c => c.id === clubId);
-    if (!clubExists) {
-      showToast('Authentication Failed', `No club found with ID: ${clubId}. Ensure your email matches [club-id]@snsct.org`, 'error');
-      identifierInput.closest('.form-group').classList.add('invalid');
-      if (emailError) emailError.textContent = `No club found with ID: ${clubId}.`;
-      return;
-    }
-    currentUser = { email: identifier, name: clubId.charAt(0).toUpperCase() + clubId.slice(1) + ' Coordinator', id: 'STAFF', role: 'staff', clubId: clubId };
-  } else {
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
@@ -1211,18 +1251,19 @@ async function handleLoginSubmit(e) {
       currentUser = {
         email: user.email,
         name: user.name,
-        id: 'STUDENT',
-        role: 'student',
-        year: user.year
+        id: user.role === 'admin' ? 'ADMIN' : (user.role === 'staff' ? 'STAFF' : 'STUDENT'),
+        role: user.role || 'student',
+        year: user.year || (user.role === 'student' ? getStudentYearFromEmail(user.email) : undefined),
+        clubId: user.clubId || null
       };
     } catch (err) {
       showToast('Authentication Failed', 'Network error. Please try again later.', 'error');
       return;
     }
-  }
 
   localStorage.setItem(USER_SESSION_KEY, JSON.stringify(currentUser));
   updateAuthUI();
+  initDatabase(); // Refresh slots for the specific user's year
   
   if (currentUser.role === 'admin' || currentUser.role === 'staff') {
     showToast('Login Successful', `Welcome, ${currentUser.name}! Redirecting to dashboard.`, 'success');
@@ -1268,11 +1309,12 @@ async function handleSignupSubmit(e) {
       name: user.name,
       id: 'STUDENT',
       role: 'student',
-      year: user.year
+      year: user.year || getStudentYearFromEmail(user.email)
     };
     
     localStorage.setItem(USER_SESSION_KEY, JSON.stringify(currentUser));
     updateAuthUI();
+    initDatabase(); // Refresh slots for specific year
     showToast('Account Created', `Welcome to ClubSphere, ${name}!`, 'success');
     switchView('overview');
   } catch (err) {

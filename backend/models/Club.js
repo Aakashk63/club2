@@ -8,7 +8,11 @@ const clubSchema = new mongoose.Schema({
   description: { type: String },
   accentColor: { type: String },
   icon: { type: String },
-  slotsRemaining: { type: Number, default: 80 }
+  slotsRemaining: { type: Number, default: 110 },
+  slotsFirstYear: { type: Number, default: 110 },
+  slotsSecondYear: { type: Number, default: 110 },
+  slotsThirdYear: { type: Number, default: 110 },
+  slotsFourthYear: { type: Number, default: 110 }
 });
 
 export const Club = mongoose.model('Club', clubSchema);
