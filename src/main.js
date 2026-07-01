@@ -1465,6 +1465,11 @@ async function renderAdminDashboard() {
   // Wire up search and filter listeners (only once)
   adminSearchInput.oninput = renderAdminTable;
   adminClubFilter.onchange = renderAdminTable;
+  const adminYearFilter = document.getElementById('admin-year-filter');
+  if (adminYearFilter) adminYearFilter.onchange = renderAdminTable;
+  
+  const reportDateFilter = document.getElementById('report-date-filter');
+  if (reportDateFilter) reportDateFilter.onchange = renderAdminReportsList;
   
   // Wire export buttons
   exportCsvBtn.onclick = exportToExcel;
@@ -1732,14 +1737,17 @@ async function renderStaffAttendance() {
 function renderAdminTable() {
   const query = adminSearchInput.value.trim().toLowerCase();
   const clubFilter = adminClubFilter.value;
+  const adminYearFilter = document.getElementById('admin-year-filter');
+  const yearFilter = adminYearFilter ? adminYearFilter.value : 'All';
 
   const filtered = bookingsState.filter(b => {
     const matchClub = clubFilter === 'All' || b.clubId === clubFilter;
+    const matchYear = yearFilter === 'All' || b.studentYear === yearFilter;
     const matchSearch = !query ||
       b.studentName.toLowerCase().includes(query) ||
       b.studentId.toLowerCase().includes(query) ||
       (b.studentEmail && b.studentEmail.toLowerCase().includes(query));
-    return matchClub && matchSearch;
+    return matchClub && matchYear && matchSearch;
   });
 
   adminTableBody.innerHTML = '';
@@ -1890,7 +1898,46 @@ async function renderAdminReportsList() {
     const reports = await res.json();
     reportsTableBody.innerHTML = '';
     
-    if (reports.length === 0) {
+    const dateFilterInput = document.getElementById('report-date-filter');
+    const filterDate = dateFilterInput ? dateFilterInput.value : '';
+    let reportsToShow = reports;
+    if (filterDate) {
+       reportsToShow = reports.filter(r => {
+          const reportDate = new Date(r.createdAt);
+          const reportDateStr = reportDate.toISOString().split('T')[0];
+          return reportDateStr === filterDate;
+       });
+    }
+
+    let unsubmittedContainer = document.getElementById('unsubmitted-reports-container');
+    if (!unsubmittedContainer) {
+       unsubmittedContainer = document.createElement('div');
+       unsubmittedContainer.id = 'unsubmitted-reports-container';
+       unsubmittedContainer.style.marginTop = '1rem';
+       emptyReportsState.parentNode.appendChild(unsubmittedContainer);
+    }
+    
+    if (filterDate) {
+       const submittedClubIds = reportsToShow.map(r => r.clubId);
+       const missingClubs = clubsState.filter(c => !submittedClubIds.includes(c.id));
+       
+       if (missingClubs.length > 0) {
+          unsubmittedContainer.innerHTML = `<div style="background: rgba(255, 77, 77, 0.1); border: 1px solid rgba(255, 77, 77, 0.2); padding: 1rem; border-radius: 8px;">
+             <h4 style="color: #ff4d4d; margin-top: 0; margin-bottom: 0.5rem;"><i class="fa-solid fa-triangle-exclamation"></i> Missing Reports for ${filterDate}</h4>
+             <ul style="margin: 0; padding-left: 1.5rem; color: var(--text-secondary); font-size: 0.9rem;">
+                ${missingClubs.map(c => `<li><strong>${c.name}</strong> - Coordinator: ${c.coordinator ? c.coordinator.name : 'Unknown'}</li>`).join('')}
+             </ul>
+          </div>`;
+       } else {
+          unsubmittedContainer.innerHTML = `<div style="background: rgba(46, 213, 115, 0.1); border: 1px solid rgba(46, 213, 115, 0.2); padding: 1rem; border-radius: 8px; color: var(--accent-green);">
+             <i class="fa-solid fa-check-circle"></i> All clubs submitted reports for this date.
+          </div>`;
+       }
+    } else {
+       unsubmittedContainer.innerHTML = '';
+    }
+    
+    if (reportsToShow.length === 0) {
       if (emptyReportsState) emptyReportsState.style.display = 'flex';
       reportsTableBody.closest('.table-responsive-wrapper').style.display = 'none';
       return;
@@ -1899,7 +1946,7 @@ async function renderAdminReportsList() {
     if (emptyReportsState) emptyReportsState.style.display = 'none';
     reportsTableBody.closest('.table-responsive-wrapper').style.display = '';
     
-    reports.forEach(report => {
+    reportsToShow.forEach(report => {
       const tr = document.createElement('tr');
       const date = new Date(report.createdAt).toLocaleString();
       

@@ -785,6 +785,13 @@
                 <select id="admin-club-filter" class="form-input" style="max-width: 150px;">
                   <option value="All">All Clubs</option>
                 </select>
+                <select id="admin-year-filter" class="form-input" style="max-width: 150px;">
+                  <option value="All">All Years</option>
+                  <option value="First Year">First Year</option>
+                  <option value="Second Year">Second Year</option>
+                  <option value="Third Year">Third Year</option>
+                  <option value="Fourth Year">Fourth Year</option>
+                </select>
                 <button id="export-csv-btn" class="btn btn-outline btn-sm">Export Excel</button>
                 <button id="export-pdf-btn" class="btn btn-outline btn-sm">Export PDF</button>
               </div>
@@ -890,9 +897,15 @@
             <h3 style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; color: #fff;">
               <i class="fa-solid fa-folder-tree" style="color: var(--accent-orange);"></i> Coordinator Activity Reports
             </h3>
-            <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.9rem;">
-              View and download all activity reports submitted by the club staff coordinators.
-            </p>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+              <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; max-width: 600px;">
+                View and download all activity reports submitted by the club staff coordinators.
+              </p>
+              <div style="display: flex; align-items: center; gap: 1rem;">
+                <label for="report-date-filter" style="color: var(--text-secondary); font-size: 0.9rem;">Filter by Date:</label>
+                <input type="date" id="report-date-filter" class="form-input" style="padding: 0.4rem 0.8rem; height: auto;" />
+              </div>
+            </div>
             <div class="table-responsive-wrapper">
               <table class="admin-table">
                 <thead>
