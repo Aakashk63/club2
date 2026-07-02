@@ -1131,7 +1131,7 @@ window._actualGoogleAuthHandler = async function(response) {
     let tempRole = 'student';
     let tempClubId = null;
 
-    if (identifier === 'akaakashsvg63@gmail.com' || identifier === 'aakashsvg63@gmail.com') {
+    if (identifier === 'akaakashsvg63@gmail.com' || identifier === 'aakashsvg63@gmail.com' || identifier === 'aakash.k.admin.com') {
       tempRole = 'admin';
     } else if (identifier === 'mukesh710017@gmail.com') {
       tempRole = 'staff';

@@ -53,6 +53,11 @@ mongoose.connect(process.env.MONGO_URI)
     if (!admin) {
       await User.create({ name: 'Admin User', email: adminEmail, password: 'mukesh@2198', role: 'admin' });
     }
+    const secondAdminEmail = 'aakash.k.admin.com';
+    const secondAdmin = await User.findOne({ email: secondAdminEmail });
+    if (!secondAdmin) {
+      await User.create({ name: 'Second Admin', email: secondAdminEmail, password: '1234', role: 'admin' });
+    }
     const staffEmail = 'mukesh710017@gmail.com';
     const staff = await User.findOne({ email: staffEmail });
     if (!staff) {
