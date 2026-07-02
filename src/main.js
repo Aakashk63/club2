@@ -1966,7 +1966,7 @@ window.openAdminClubDetailsModal = function(clubId, date, yearFilter) {
           <th>Name</th>
           <th>Dept</th>
           <th>Date</th>
-          <th>Status</th>
+          <th>Attendance</th>
         </tr>
       </thead>
       <tbody>
@@ -2016,7 +2016,7 @@ window.openAdminClubDetailsModal = function(clubId, date, yearFilter) {
         doc.text(`Attendance: ${club.name} - ${date}`, 14, 15);
         doc.autoTable({
           startY: 20,
-          head: [['Name', 'Dept', 'Date', 'Status']],
+          head: [['Name', 'Dept', 'Date', 'Attendance']],
           body: exportData.map(r => [r.Name, r.Dept, r.Date, r.Status]),
           didParseCell: function (data) {
              if (data.section === 'body' && data.column.index === 3) {
@@ -2043,7 +2043,7 @@ window.openAdminClubDetailsModal = function(clubId, date, yearFilter) {
 
   // Export to Excel (CSV fallback for real excel)
   document.getElementById('admin-export-excel-club')?.addEventListener('click', () => {
-    let csv = 'Name,Dept,Date,Status\n';
+    let csv = 'Name,Dept,Date,Attendance\n';
     exportData.forEach(r => {
       csv += `"${r.Name}","${r.Dept}","${r.Date}","${r.Status}"\n`;
     });
