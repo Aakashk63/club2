@@ -2155,7 +2155,7 @@ async function renderAdminReportsList() {
           <span style="color: var(--text-secondary); font-size: 0.9rem;">${date}</span>
         </td>
         <td>
-          <a href="${API_BASE_URL}${report.filePath}" target="_blank" class="btn btn-outline btn-sm" style="margin-right:5px;"><i class="fa-solid fa-eye"></i> View</a><a href="${API_BASE_URL}${report.filePath}" download="${escapeHtml(report.fileName)}" class="btn btn-outline btn-sm" target="_blank">
+          <a href="${API_BASE_URL}${encodeURI(report.filePath)}" target="_blank" class="btn btn-outline btn-sm" style="margin-right:5px;"><i class="fa-solid fa-eye"></i> View</a><a href="${API_BASE_URL}${encodeURI(report.filePath)}" download="${escapeHtml(report.fileName)}" class="btn btn-outline btn-sm" target="_blank">
             <i class="fa-solid fa-download"></i> Download
           </a>
         </td>
