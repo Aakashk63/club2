@@ -1951,6 +1951,7 @@ function renderAdminTable() {
 }
 
 
+
 window.openAdminClubDetailsModal = function(clubId, date, yearFilter) {
   const club = clubsState.find(c => c.id === clubId);
   let clubBookings = bookingsState.filter(b => b.clubId === clubId);
@@ -2002,37 +2003,57 @@ window.openAdminClubDetailsModal = function(clubId, date, yearFilter) {
         <button id="admin-export-excel-club" class="btn btn-outline btn-sm"><i class="fa-solid fa-file-excel"></i> Excel</button>
       </div>
     </div>
-    ${tableHtml}
+    <div id="print-area">
+      ${tableHtml}
+    </div>
   `;
 
+  // Fix PDF Export to actually export a PDF
   document.getElementById('admin-export-pdf-club')?.addEventListener('click', () => {
-    // Basic CSV export as alternative if jspdf not present, but user has jspdf mapped in imports normally.
-    // Given the limits of CDN, a quick CSV export is very safe here.
-    let csv = 'Name,Dept,Date,Status\n';
-    exportData.forEach(r => {
-      csv += `"${r.Name}","${r.Dept}","${r.Date}","${r.Status}"\n`;
+    import('jspdf').then(jspdf => {
+      import('jspdf-autotable').then(() => {
+        const doc = new jspdf.jsPDF();
+        doc.text(`Attendance: ${club.name} - ${date}`, 14, 15);
+        doc.autoTable({
+          startY: 20,
+          head: [['Name', 'Dept', 'Date', 'Status']],
+          body: exportData.map(r => [r.Name, r.Dept, r.Date, r.Status]),
+          didParseCell: function (data) {
+             if (data.section === 'body' && data.column.index === 3) {
+                 if (data.cell.raw === 'ABSENT') {
+                    data.cell.styles.textColor = [255, 77, 77];
+                 } else if (data.cell.raw === 'PRESENT') {
+                    data.cell.styles.textColor = [46, 213, 115];
+                 }
+             }
+          }
+        });
+        doc.save(`${club.id}_attendance_${date}.pdf`);
+      });
+    }).catch(() => {
+       // Fallback: If jspdf not loaded via import map, we can trigger print preview
+       const printContent = document.getElementById('print-area').innerHTML;
+       const originalContent = document.body.innerHTML;
+       document.body.innerHTML = '<h2>' + club.name + ' Attendance - ' + date + '</h2>' + printContent;
+       window.print();
+       document.body.innerHTML = originalContent;
+       window.location.reload(); // Quick restore of SPA state
     });
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${club.id}_attendance_${date}.csv`; // providing CSV for PDF since libraries might be missing
-    a.click();
-    showToast("Downloaded", "Downloaded as CSV (PDF fallback)", "success");
   });
 
+  // Export to Excel (CSV fallback for real excel)
   document.getElementById('admin-export-excel-club')?.addEventListener('click', () => {
     let csv = 'Name,Dept,Date,Status\n';
     exportData.forEach(r => {
       csv += `"${r.Name}","${r.Dept}","${r.Date}","${r.Status}"\n`;
     });
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${club.id}_attendance_${date}.csv`;
+    a.download = `${club.id}_attendance_${date}.xlsx`;
     a.click();
-    showToast("Downloaded", "Downloaded as CSV (Excel compatible)", "success");
+    showToast("Downloaded", "Downloaded as Excel (CSV compatible)", "success");
   });
 
   const modal = document.getElementById('registrations-modal');
@@ -2134,7 +2155,7 @@ async function renderAdminReportsList() {
           <span style="color: var(--text-secondary); font-size: 0.9rem;">${date}</span>
         </td>
         <td>
-          <a href="${API_BASE_URL}${report.filePath}" download="${escapeHtml(report.fileName)}" class="btn btn-outline btn-sm" target="_blank">
+          <a href="${API_BASE_URL}${report.filePath}" target="_blank" class="btn btn-outline btn-sm" style="margin-right:5px;"><i class="fa-solid fa-eye"></i> View</a><a href="${API_BASE_URL}${report.filePath}" download="${escapeHtml(report.fileName)}" class="btn btn-outline btn-sm" target="_blank">
             <i class="fa-solid fa-download"></i> Download
           </a>
         </td>
@@ -2605,3 +2626,28 @@ function createCustomSelect(selectEl) {
 
 
 
+
+
+
+setInterval(async () => {
+  if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'staff')) {
+    try {
+      const [bRes, aRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/bookings`),
+        fetch(`${API_BASE_URL}/api/attendance`)
+      ]);
+      if (bRes.ok && aRes.ok) {
+        bookingsState = await bRes.json();
+        attendanceState = await aRes.json();
+        // Re-render silently if they are looking at the dashboard
+        if (document.getElementById('admin-view').classList.contains('active')) {
+          if (currentUser.role === 'staff') {
+             renderStaffAttendance();
+          } else {
+             renderAdminTable();
+          }
+        }
+      }
+    } catch(e) {}
+  }
+}, 5000); // 5 seconds auto-refresh
