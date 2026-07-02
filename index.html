@@ -785,6 +785,7 @@
                 <select id="admin-club-filter" class="form-input" style="max-width: 150px;">
                   <option value="All">All Clubs</option>
                 </select>
+                <input type="date" id="admin-date-filter" class="form-input" style="max-width: 150px;" title="Attendance Date" />
                 <select id="admin-year-filter" class="form-input" style="max-width: 150px;">
                   <option value="All">All Years</option>
                   <option value="First Year">First Year</option>
@@ -800,7 +801,7 @@
             <div class="glass-card table-card">
               <div class="table-responsive-wrapper">
                 <table class="admin-table">
-                  <thead>
+                  <thead id="admin-table-head">
                     <tr>
                       <th>Student Details</th>
                       <th>Club &amp; Slot ID</th>
@@ -834,7 +835,7 @@
               </h3>
               <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
                 <label for="attendance-date-picker" style="color: var(--text-secondary); font-size: 0.9rem;">Date:</label>
-                <input type="date" id="attendance-date-picker" class="form-input" style="max-width: 150px; padding: 0.4rem 0.8rem; height: auto; margin-right: 0.5rem;" />
+                <input type="date" id="attendance-date-picker" step="7" min="2024-01-03" class="form-input" style="max-width: 150px; padding: 0.4rem 0.8rem; height: auto; margin-right: 0.5rem;" />
                 
                 <button id="btn-show-registrations" class="btn btn-outline btn-sm">
                   <i class="fa-solid fa-eye"></i> View Detailed Registrations
@@ -882,7 +883,7 @@
               <div class="form-group" style="margin: 0;">
                 <label class="form-label" for="report-file-input">Choose Report File <span
                     class="required-star">*</span></label>
-                <input type="file" id="report-file-input" accept=".pdf,.xlsx,.xls,.doc,.docx" required
+                <input type="file" id="report-file-input" accept=".pdf,.doc,.docx" required
                   style="padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--text-primary); font-size: 0.9rem; width: 100%; max-width: 400px;" />
                 <span class="error-msg" id="report-file-error">Please select a file to upload.</span>
               </div>
